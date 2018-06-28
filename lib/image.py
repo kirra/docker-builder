@@ -2,6 +2,16 @@ import json
 import logging
 import os
 import re
+import subprocess
+from contextlib import contextmanager
+
+
+@contextmanager
+def working_dir(directory):
+    prev_cwd = os.getcwd()
+    os.chdir(directory)
+    yield
+    os.chdir(prev_cwd)
 
 
 class Image:
@@ -44,5 +54,28 @@ class Image:
         self.metadata = json.load(open(metadata_file, 'r'))
         self.name = self.metadata['local_tag']
 
+    def run_pre_build_scripts(self):
+        if 'pre_build' not in self.metadata:
+            return
+
+        logging.debug("Running pre build scripts for {}".format(self.name))
+
+        with working_dir(self.dir_name):
+            for line in self.metadata['pre_build']:
+                process = subprocess.Popen(line.split())
+                process.wait()
+
     def build(self):
         logging.debug("Building {}".format(self.name))
+
+        with working_dir(self.dir_name):
+            arguments = ''
+
+            if 'arguments' in self.metadata:
+                argument_items = self.metadata['arguments'].items()
+                arguments = ' '.join("{:s} {:s}".format(key, val) for (key, val) in argument_items)
+
+            command = "docker build {:s} -t {:s} .".format(arguments.strip(), self.name)
+
+            process = subprocess.Popen(command.split())
+            process.wait()

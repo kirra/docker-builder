@@ -1,5 +1,7 @@
 import glob
 import logging
+import subprocess
+import sys
 
 from lib.dependency import Node, Resolver
 from lib.image import Image
@@ -17,6 +19,7 @@ class Builder:
         self.read_manifest()
         self.index_images()
         self.resolve_dependencies()
+        self.pull_images()
         self.build_images()
 
     def index_images(self) -> None:
@@ -50,7 +53,7 @@ class Builder:
         logging.debug("External dependencies found: {:s}".format(str(self.external_dependencies)))
 
     def build_images(self):
-        """ Build the indexed Images in order of dependencies, lowest number of dependencies
+        """ Build the indexed local Images in order of dependencies, lowest number of dependencies
         first. """
 
         for dep in self.local_dependencies:
@@ -59,4 +62,15 @@ class Builder:
     def read_manifest(self):
         #self.manifest = json.load(open(manifest, 'r'))
         pass
+
+    def pull_images(self):
+        """ Pull external dependencies. """
+
+        for image in self.external_dependencies:
+            logging.debug("Pulling image {:s}".format(image))
+
+            command = "docker pull {:s}".format(image).split(" ")
+            process = subprocess.Popen(command)
+            process.wait()
+
 
