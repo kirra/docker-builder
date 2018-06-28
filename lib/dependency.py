@@ -14,7 +14,6 @@ class Node:
 
 
 class Resolver:
-
     def __init__(self, graph):
         self.graph = graph
 
