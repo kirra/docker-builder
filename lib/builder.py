@@ -1,20 +1,62 @@
 import glob
-import json
+import logging
 
+from lib.dependency import Node, Resolver
 from lib.image import Image
 
 
 class Builder:
-    def __init__(self, manifest):
-        self.manifest = json.load(open(manifest, 'r'))
 
-        self._load_images("%s/*/Dockerfile".format(manifest['container']))
+    def __init__(self):
 
-    def _load_images(self, pattern):
-        images = {}
-        for dockerfile in glob.glob(pattern):
+        self.images = {}
+        self.local_dependencies = []
+        self.external_dependencies = []
+
+    def run(self):
+        self.read_manifest()
+        self.index_images()
+        self.resolve_dependencies()
+        self.build_images()
+
+    def index_images(self) -> None:
+        """ Index the Images found in the current directory. """
+
+        for dockerfile in glob.glob('containers/*/Dockerfile'):
             image = Image(dockerfile)
-            images[image.name] = image
+            image.index()
+            self.images[image.name] = image
 
-        self.images = images
+    def resolve_dependencies(self) -> None:
+        """ Resolve the dependencies of the indexed Images. """
+
+        nodes = {image.name: Node(image.name) for image in self.images.values()}
+
+        for image in self.images.values():
+
+            for dep in image.dependencies:
+
+                if dep in self.images:
+                    nodes[image.name].add_edge(nodes[dep])
+
+                elif dep not in self.external_dependencies:
+                    self.external_dependencies.append(dep)
+
+        resolver = Resolver(nodes.values())
+        dependencies = resolver.resolve_dependencies()
+
+        self.local_dependencies = dependencies
+
+        logging.debug("External dependencies found: {:s}".format(str(self.external_dependencies)))
+
+    def build_images(self):
+        """ Build the indexed Images in order of dependencies, lowest number of dependencies
+        first. """
+
+        for dep in self.local_dependencies:
+            self.images[dep.name].build()
+
+    def read_manifest(self):
+        #self.manifest = json.load(open(manifest, 'r'))
+        pass
 

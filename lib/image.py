@@ -1,19 +1,27 @@
 import json
+import logging
 import os
 import re
 
 
 class Image:
-    def __init__(self, dockerfile):
-        self.dockerfile = dockerfile
-        self.dependencies = []
-        self.dir_name = os.path.dirname(self.dockerfile)
 
-        self._parse_manifest()
+    def __init__(self, file_path):
+        self.file_path = file_path
+
+        self.dependencies = []
+        self.metadata = {}
+        self.name = None
+
+        self.dir_name = os.path.dirname(self.file_path)
+        self.image_name = self.dir_name
+
+    def index(self):
+        self._parse_metadata()
         self._parse_dockerfile()
 
     def _parse_dockerfile(self):
-        with open(self.dockerfile, 'r') as handle:
+        with open(self.file_path, 'r') as handle:
             lines = handle.readlines()
 
         from_pattern = re.compile('^FROM ([^\s]+)')
@@ -27,7 +35,14 @@ class Image:
             for match in copy_pattern.finditer(line):
                 self.dependencies.append(match.group(1))
 
-    def _parse_manifest(self):
-        manifest = "{}/manifest.json".format(self.dir_name)
-        self.manifest = json.load(open(manifest, 'r'))
-        self.name = self.manifest['local_tag']
+        self.dependencies = list(set(self.dependencies))
+
+        logging.debug("{:s} has dependencies: {:s}".format(self.image_name, str(self.dependencies)))
+
+    def _parse_metadata(self):
+        metadata_file = "{}/metadata.json".format(self.dir_name)
+        self.metadata = json.load(open(metadata_file, 'r'))
+        self.name = self.metadata['local_tag']
+
+    def build(self):
+        logging.debug("Building {}".format(self.name))
