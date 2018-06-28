@@ -65,7 +65,7 @@ class Graph:
 
     def add_local(self, node: 'Node') -> None:
         """
-        Adds a node to the local nodes and the graph.
+        Adds a node to the local nodes.
         :param node: The node to add.
         :return: None.
         """
@@ -75,7 +75,7 @@ class Graph:
 
     def add_remote(self, node: 'Node') -> None:
         """
-        Adds a node to the remote nodes and the graph.
+        Adds a node to the remote nodes.
         :param node: The node to add.
         :return: None.
         """

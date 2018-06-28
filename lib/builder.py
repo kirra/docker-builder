@@ -29,7 +29,7 @@ class Builder:
         self.resolve_dependency('kirra-php:7.1')
         self.pull_images()
 
-        # self.build_images()
+        self.build_images()
 
     def index_images(self) -> None:
         """
@@ -116,7 +116,7 @@ class Builder:
         first. """
 
         for dependency in self.local_dependencies:
-            self.images[dependency.name].build()
+            self.images[dependency].build()
 
     def pull_images(self):
         """ Pull remote dependencies. """
