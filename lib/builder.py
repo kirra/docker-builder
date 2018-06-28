@@ -20,10 +20,15 @@ class Builder:
     def run(self):
         """ Runs methods to build all images. """
         self.index_images()
-        self.resolve_dependencies()
-        # self.resolve_dependency('kirra-php:7.1')
 
+        logging.debug("\nResolving all images\n")
+        self.resolve_dependencies()
         self.pull_images()
+
+        logging.debug("\nResolving single image\n")
+        self.resolve_dependency('kirra-php:7.1')
+        self.pull_images()
+
         # self.build_images()
 
     def index_images(self) -> None:
@@ -46,6 +51,9 @@ class Builder:
 
         self._build_dependencies(Resolver(self.graph.nodes.values()).resolve_dependencies())
 
+        logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
+        logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))
+
     def resolve_dependency(self, name: str) -> None:
         """
         Resolve dependencies for a single indexed image and return them.
@@ -53,7 +61,10 @@ class Builder:
         :return:
         """
 
-        self._build_dependencies(Resolver([self.graph.locals[name]]).resolve_dependencies())
+        self._build_dependencies(Resolver([self.graph.local_nodes[name]]).resolve_dependencies())
+
+        logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
+        logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))
 
     def _build_dependency_graph(self) -> 'Graph':
         """
@@ -79,14 +90,23 @@ class Builder:
             for dependency in image.dependencies:
                 graph.nodes[image.name].add_edge(graph.nodes[dependency])
 
-        logging.debug("Dependency graph (local nodes): {:s}".format(str(list(graph.locals.keys()))))
-        logging.debug("Dependency graph (remote nodes): {:s}".format(str(list(graph.remotes.keys()))))
+        logging.debug("Dependency graph (local nodes): {:s}".format(str(list(graph.local_nodes.keys()))))
+        logging.debug("Dependency graph (remote nodes): {:s}".format(str(list(graph.remote_nodes.keys()))))
 
         return graph
 
     def _build_dependencies(self, dependencies: List['Node']) -> None:
+        """
+        Builds ordered dependencies for both local and remote dependency nodes.
+        :param dependencies:
+        :return:
+        """
+
+        self.local_dependencies = []
+        self.remote_dependencies = []
+
         for dependency in dependencies:
-            if dependency.name in self.graph.locals:
+            if dependency.name in self.graph.local_nodes:
                 self.local_dependencies.append(dependency.name)
             else:
                 self.remote_dependencies.append(dependency.name)

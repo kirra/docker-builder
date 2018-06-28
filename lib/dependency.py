@@ -59,8 +59,8 @@ class Resolver:
 
 class Graph:
     def __init__(self):
-        self.locals = {}
-        self.remotes = {}
+        self.local_nodes = {}
+        self.remote_nodes = {}
         self.nodes = {}
 
     def add_local(self, node: 'Node') -> None:
@@ -71,7 +71,7 @@ class Graph:
         """
 
         self.nodes[node.name] = node
-        self.locals[node.name] = node
+        self.local_nodes[node.name] = node
 
     def add_remote(self, node: 'Node') -> None:
         """
@@ -81,5 +81,5 @@ class Graph:
         """
 
         self.nodes[node.name] = node
-        self.remotes[node.name] = node
+        self.remote_nodes[node.name] = node
 
