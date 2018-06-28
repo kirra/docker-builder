@@ -16,6 +16,7 @@ class Builder:
         self.external_dependencies = []
 
     def run(self):
+        """ Runs methods to build all images. """
         self.read_manifest()
         self.index_images()
         self.resolve_dependencies()
@@ -72,5 +73,3 @@ class Builder:
             command = "docker pull {:s}".format(image).split(" ")
             process = subprocess.Popen(command)
             process.wait()
-
-
