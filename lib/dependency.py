@@ -1,5 +1,7 @@
 import logging
-from typing import List
+from typing import List, NewType
+
+NodeList = List['Node']
 
 
 class Node:
@@ -18,7 +20,7 @@ class Resolver:
     def __init__(self, graph):
         self.graph = graph
 
-    def resolve_dependency(self, node: 'Node', resolved: List['Node'], unresolved: List['Node']) -> None:
+    def resolve_dependency(self, node: Node, resolved: NodeList, unresolved: NodeList) -> None:
         """
         Resolves the dependencies for a single node.
         :param node: The node to resolve the dependencies for.
@@ -43,7 +45,7 @@ class Resolver:
         resolved.append(node)
         unresolved.remove(node)
 
-    def resolve_dependencies(self) -> List['Node']:
+    def resolve_dependencies(self) -> NodeList:
         """
         Resolves the dependencies for the graph.
         :return:
@@ -63,7 +65,7 @@ class Graph:
         self.remote_nodes = {}
         self.nodes = {}
 
-    def add_local(self, node: 'Node') -> None:
+    def add_local(self, node: Node) -> None:
         """
         Adds a node to the local nodes.
         :param node: The node to add.
@@ -73,7 +75,7 @@ class Graph:
         self.nodes[node.name] = node
         self.local_nodes[node.name] = node
 
-    def add_remote(self, node: 'Node') -> None:
+    def add_remote(self, node: Node) -> None:
         """
         Adds a node to the remote nodes.
         :param node: The node to add.

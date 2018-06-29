@@ -1,9 +1,8 @@
 import glob
 import logging
 import subprocess
-from typing import Dict, List
 
-from lib.dependency import Node, Resolver, Graph
+from lib.dependency import Node, Resolver, Graph, NodeList
 from lib.image import Image
 
 
@@ -66,10 +65,10 @@ class Builder:
         logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
         logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))
 
-    def _build_dependency_graph(self) -> 'Graph':
+    def _build_dependency_graph(self) -> Graph:
         """
-        Builds a dependency graph for the images. Starts by creating a node for every image and dependency and then
-        adding the edges.
+        Builds a dependency graph for the images. Starts by creating a node for every image and
+        dependency and then adding the edges.
         :return: An initialized dependency graph.
         """
 
@@ -95,7 +94,7 @@ class Builder:
 
         return graph
 
-    def _build_dependencies(self, dependencies: List['Node']) -> None:
+    def _build_dependencies(self, dependencies: NodeList) -> None:
         """
         Builds ordered dependencies for both local and remote dependency nodes.
         :param dependencies:
