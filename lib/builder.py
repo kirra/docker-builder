@@ -1,7 +1,6 @@
 import glob
 import logging
 import subprocess
-from typing import List
 
 from lib.config import Config
 from lib.dependency import Node, Resolver, Graph, NodeList
@@ -11,8 +10,7 @@ from lib.image import Image
 class Builder:
 
     def __init__(self, config: Config):
-
-
+        self.config = config
 
         self.images = {}
         self.graph = None
