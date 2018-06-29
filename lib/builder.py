@@ -1,7 +1,7 @@
 import glob
 import logging
 import subprocess
-from typing import Dict, List
+from typing import List
 
 from lib.dependency import Node, Resolver, Graph
 from lib.image import Image

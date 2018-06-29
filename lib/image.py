@@ -26,11 +26,19 @@ class Image:
         self.dir_name = os.path.dirname(self.file_path)
         self.image_name = self.dir_name
 
-    def index(self):
+    def index(self) -> None:
+        """
+        Indexes a Docker image by parsing a manifest and the Dockerfile.
+        :return: None.
+        """
         self._parse_manifest()
         self._parse_dockerfile()
 
-    def _parse_dockerfile(self):
+    def _parse_dockerfile(self) -> None:
+        """
+        Parses a Dockerfile and stores the dependencies.
+        :return: None.
+        """
         with open(self.file_path, 'r') as handle:
             lines = handle.readlines()
 
@@ -48,12 +56,26 @@ class Image:
 
         logging.debug("{:s} has dependencies: {:s}".format(self.image_name, str(self.dependencies)))
 
-    def _parse_manifest(self):
-        metadata_file = "{}/manifest.json".format(self.dir_name)
-        self.manifest = json.load(open(metadata_file, 'r'))
-        self.name = self.manifest['local_tag']
+    def _parse_manifest(self) -> None:
+        """
+        Parses a manifest file which holds settings for a Docker image.
+        :return: None.
+        """
 
-    def run_pre_build_scripts(self):
+        metadata_file = "{}/manifest.json".format(self.dir_name)
+
+        self.manifest = json.load(open(metadata_file, 'r'))
+
+        self.name = self.image_name
+        if 'local_tag' in self.manifest:
+            self.name = self.manifest['local_tag']
+
+    def run_pre_build_scripts(self) -> None:
+        """
+        Runs scripts defined in the manifest's `pre_build` section.
+        :return: None.
+        """
+
         if 'pre_build' not in self.manifest:
             return
 
@@ -64,7 +86,29 @@ class Image:
                 process = subprocess.Popen(line.split())
                 process.wait()
 
-    def build(self):
+    def run_post_build_scripts(self) -> None:
+        """
+        Runs scripts defined in the manifest's `post_build` section.
+        :return: None.
+        """
+
+        if 'post_build' not in self.manifest:
+            return
+
+        logging.debug("Running post build scripts for {}.".format(self.name))
+
+        with working_dir(self.dir_name):
+            for line in self.manifest['post_build']:
+                process = subprocess.Popen(line.split())
+                process.wait()
+
+    def build(self) -> None:
+        """
+        Builds a Docker image using the settings in the manifest. If a `local_tag` isn't specified in the manifest, the
+        built image isn't tagged.
+        :return: None.
+        """
+
         logging.debug("Building {}".format(self.name))
 
         with working_dir(self.dir_name):
@@ -74,7 +118,10 @@ class Image:
                 argument_items = self.manifest['arguments'].items()
                 arguments = ' '.join("{:s} {:s}".format(key, val) for (key, val) in argument_items)
 
-            command = "docker build {:s} -t {:s} .".format(arguments.strip(), self.name)
+            if 'local_tag' in self.manifest:
+                arguments = arguments + " -t {:s}".format(self.manifest['local_tag'])
+
+            command = "docker build {:s} .".format(arguments.strip(), self.name)
 
             process = subprocess.Popen(command.split())
             process.wait()
