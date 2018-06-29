@@ -4,13 +4,16 @@ import os
 
 from lib.builder import Builder
 
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
-        description="Docker builder, to build docker images with up- and/or downstream dependencies"
+        description="Docker builder, to build Docker images with up- and/or downstream dependencies"
     )
 
-    parser.add_argument('-i', '--image', help="Name of the image to build")
+    parser.add_argument('-p', '--push', action='store_true', help="Push the image(s) to the registry after building")
+    parser.add_argument('-r', '--registry', action='append', help="The registries to push the images to")
+    parser.add_argument('-i', '--image', action='append', help="Name of the images to build")
     parser.add_argument('-d', '--dir', action='append', default=os.getcwd(),
                         help="The directory to scan for Dockerfiles, multiple directories can be given, if none are given the current directory is used.")
     parser.add_argument('-v', '--verbose', action='store_true')
@@ -23,9 +26,5 @@ if __name__ == '__main__':
     else:
         logging.basicConfig(level=logging.WARNING)
 
-    print(args.dir)
-
-
-
-    #builder = Builder()
-    #builder.run()
+    builder = Builder()
+    builder.run()
