@@ -4,3 +4,9 @@ test36:
   script:
     - python3 -m unittest
 
+test37:
+  image: python:3.7-alpine
+  script:
+    - python3 -m unittest
+
+
