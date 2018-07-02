@@ -1,0 +1,6 @@
+
+test36:
+  image: python:3.6-alpine
+  script:
+    - python3 -m unittest
+
