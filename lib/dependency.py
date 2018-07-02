@@ -4,6 +4,10 @@ from typing import List, NewType
 NodeList = List['Node']
 
 
+class ResolverException(Exception):
+    pass
+
+
 class Node:
     def __init__(self, name: str):
         self.name = name
@@ -38,7 +42,8 @@ class Resolver:
             if edge not in resolved:
 
                 if edge in unresolved:
-                    raise Exception('Circular reference detected: %s -&gt; %s'.format(node.name, edge.name))
+                    raise ResolverException(
+                        'Circular dependency detected: %s -&gt; %s'.format(node.name, edge.name))
 
                 self.resolve_dependency(edge, resolved, unresolved)
 

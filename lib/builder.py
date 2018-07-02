@@ -42,7 +42,7 @@ class Builder:
             image.index()
             self.images[image.name] = image
 
-        self.graph = self._build_dependency_graph()
+        self._build_dependency_graph()
 
     def resolve_dependencies(self) -> None:
         """
@@ -50,7 +50,7 @@ class Builder:
         :return: None.
         """
 
-        self._build_dependencies(Resolver(self.graph.nodes.values()).resolve_dependencies())
+        self._split_dependencies(Resolver(self.graph.nodes.values()).resolve_dependencies())
 
         logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
         logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))
@@ -62,12 +62,12 @@ class Builder:
         :return:
         """
 
-        self._build_dependencies(Resolver([self.graph.local_nodes[name]]).resolve_dependencies())
+        self._split_dependencies(Resolver([self.graph.local_nodes[name]]).resolve_dependencies())
 
         logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
         logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))
 
-    def _build_dependency_graph(self) -> Graph:
+    def _build_dependency_graph(self) -> None:
         """
         Builds a dependency graph for the images. Starts by creating a node for every image and
         dependency and then adding the edges.
@@ -94,11 +94,11 @@ class Builder:
         logging.debug("Dependency graph (local nodes): {:s}".format(str(list(graph.local_nodes.keys()))))
         logging.debug("Dependency graph (remote nodes): {:s}".format(str(list(graph.remote_nodes.keys()))))
 
-        return graph
+        self.graph = graph
 
-    def _build_dependencies(self, dependencies: NodeList) -> None:
+    def _split_dependencies(self, dependencies: NodeList) -> None:
         """
-        Builds ordered dependencies for both local and remote dependency nodes.
+        Split dependencies into local and remote dependencies.
         :param dependencies:
         :return:
         """
