@@ -114,23 +114,28 @@ class Image:
         self.run_pre_build_scripts()
 
         with working_dir(self.dir_name):
-
-            arguments = ''
-
+            arguments = {}
             if 'arguments' in self.manifest:
-                argument_items = self.manifest['arguments'].items()
-                arguments = ' '.join("{:s} {:s}".format(key, val) for (key, val) in argument_items)
+                arguments = self.manifest['arguments']
 
             if 'local_tag' in self.manifest:
-                arguments = arguments + " -t {:s}".format(self.manifest['local_tag'])
+                arguments['-t'] = self.manifest['local_tag']
 
-            command = "docker build {:s} .".format(arguments.strip(), self.name)
+            cli_arguments = ' '.join("{:s} {:s}".format(option, value) for (option, value) in arguments.items())
+
+            command = "docker build {:s} .".format(cli_arguments.strip(), self.name)
             process = subprocess.Popen(command.split())
             process.wait()
 
         self.run_post_build_scripts()
 
     def push(self, registry: str) -> None:
+        """
+        Pushes a Docker image to a registry defined by `registry` and using the settings in the manifest. If either
+        the `local_tag` or the `registry_tag` aren't specified, the image won't be pushed.
+        :param str registry: The registry to push the image to.
+        :return: None
+        """
 
         if 'local_tag' not in self.manifest or 'registry_tag' not in self.manifest:
             return
