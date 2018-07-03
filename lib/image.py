@@ -111,7 +111,10 @@ class Image:
 
         logging.debug("Building {}".format(self.name))
 
+        self.run_pre_build_scripts()
+
         with working_dir(self.dir_name):
+
             arguments = ''
 
             if 'arguments' in self.manifest:
@@ -124,6 +127,8 @@ class Image:
             command = "docker build {:s} .".format(arguments.strip(), self.name)
             process = subprocess.Popen(command.split())
             process.wait()
+
+        self.run_post_build_scripts()
 
     def push(self, registry: str) -> None:
 
