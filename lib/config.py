@@ -50,10 +50,10 @@ class Config:
         if 'logging_level' in self.arguments:
             config['logging']['level'] = self.arguments['logging_level']
 
-        if self.arguments['dir'] is not None:
+        if self.arguments.get('dir') is not None:
             config['directories'] = self.arguments['dir']
 
-        if self.arguments['registry'] is not None:
+        if self.arguments.get('registry') is not None:
             config['registries'] = self.arguments['registry']
 
         self.config = config
