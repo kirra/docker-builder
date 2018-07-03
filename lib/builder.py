@@ -25,6 +25,9 @@ class Builder:
         self.pull_images()
         self.build_images()
 
+        if self.config['push']:
+            self.push_images()
+
     def index_images(self) -> None:
         """
         Index the images found in the current directory and build their dependency graph.
@@ -124,3 +127,10 @@ class Builder:
             command = "docker pull {:s}".format(image).split(" ")
             process = subprocess.Popen(command)
             process.wait()
+
+    def push_images(self):
+        """ Push the images to the registries. """
+
+        for image in self.images:
+            for registry in self.config['registries']:
+                image.push(registry)

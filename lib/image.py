@@ -104,8 +104,8 @@ class Image:
 
     def build(self) -> None:
         """
-        Builds a Docker image using the settings in the manifest. If a `local_tag` isn't specified in the manifest, the
-        built image isn't tagged.
+        Builds a Docker image using the settings in the manifest. If a `local_tag` isn't specified
+        in the manifest, the built image isn't tagged.
         :return: None.
         """
 
@@ -122,6 +122,21 @@ class Image:
                 arguments = arguments + " -t {:s}".format(self.manifest['local_tag'])
 
             command = "docker build {:s} .".format(arguments.strip(), self.name)
-
             process = subprocess.Popen(command.split())
             process.wait()
+
+    def push(self, registry: str) -> None:
+
+        if 'local_tag' not in self.manifest or 'registry_tag' not in self.manifest:
+            return
+
+        registry_tag = "{:s}/{:s}".format(
+            registry.rstrip('/'), self.manifest['registry_tag'].lstrip('/'))
+
+        command = "docker tag {:s} {:s}".format(self.manifest['local_tag'], registry_tag)
+        process = subprocess.Popen(command.split())
+        process.wait()
+
+        command = "docker push {:s}".format(registry_tag)
+        process = subprocess.Popen(command.split())
+        process.wait()
