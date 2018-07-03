@@ -1,6 +1,7 @@
 import glob
 import logging
 import subprocess
+from typing import List
 
 from lib.dependency import Node, Resolver, Graph, NodeList
 from lib.image import Image
@@ -23,17 +24,19 @@ class Builder:
 
         logging.debug(self.config['images'])
 
+        self.resolve_dependencies()
+
         if len(self.config['images']) > 0:
-            for image in self.config['images']:
-                self.resolve_dependency(image)
-        else:
-            self.resolve_dependencies()
+            #self.resolve_dependency(image)
 
-        self.pull_images()
-        self.build_images()
+            if self.config['core']['downstream']:
+                self.filter_dependencies(self.config['images'])
 
-        if self.config['push']:
-            self.push_images()
+        #self.pull_images()
+        #self.build_images()
+
+        #if self.config['push']:
+        #    self.push_images()
 
     def index_images(self) -> None:
         """
@@ -57,20 +60,6 @@ class Builder:
         logging.debug("\nResolving all images\n")
 
         self._split_dependencies(Resolver(self.graph.nodes.values()).resolve_dependencies())
-
-        logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
-        logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))
-
-    def resolve_dependency(self, name: str) -> None:
-        """
-        Resolve dependencies for a single indexed image and return them.
-        :param name: The name of the image to resolve the dependencies for.
-        :return:
-        """
-
-        logging.debug("\nResolving image {:s}\n".format(name))
-
-        self._split_dependencies(Resolver([self.graph.local_nodes[name]]).resolve_dependencies())
 
         logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
         logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))
@@ -142,3 +131,23 @@ class Builder:
         for image in self.images:
             for registry in self.config['registries']:
                 image.push(registry)
+
+    def filter_dependencies(self, images: List[str]):
+
+        local_dependencies = images
+
+        index = min([self.local_dependencies.index(i) for i in images])
+
+        for dependency in self.local_dependencies[index:]:
+            image = self.images[dependency]
+
+            for image_dependency in image.dependencies:
+                if image_dependency in local_dependencies:
+                    local_dependencies.append(image.name)
+                    break
+
+        self.local_dependencies = local_dependencies
+        self.remote_dependencies = []
+
+        logging.debug("Filtered order (local): {:s}".format(str(self.local_dependencies)))
+        logging.debug("Filtered order (remote): {:s}".format(str(self.remote_dependencies)))

@@ -24,9 +24,9 @@ class BuilderTest(TestCase):
     def create_simple_dependencies(self):
         images = {}
 
-        #   d
-        #  / \
-        # b   c
+        #   d      h
+        #  / \    / \
+        # b   c  i   g
         #      \
         #       a
         #      / \
@@ -40,11 +40,19 @@ class BuilderTest(TestCase):
         self.create_image('e', ['a'], images)
         self.create_image('f', ['a'], images)
 
+        self.create_image('h', [], images)
+        self.create_image('i', ['h'], images)
+        self.create_image('g', ['h'], images)
+
         return images
 
     def check_graph_order(self, target, before, order):
         check_list = {key: False for key in before}
         check_list[target] = False
+
+        for check in check_list:
+            self.assertTrue(check in order)
+
         for node in order:
             check_list[node] = True
 
@@ -52,6 +60,20 @@ class BuilderTest(TestCase):
                 bla = [check_list[check] for check in before]
                 self.assertEqual(sum(bla), 0)
                 break
+
+    def test_filter_dependencies(self):
+
+        builder = self.create_builder()
+        images = self.create_simple_dependencies()
+
+        builder.images = images
+        builder._build_dependency_graph()
+        builder.resolve_dependencies()
+        builder.filter_dependencies(['c', 'h'])
+
+        self.check_graph_order('c', ['a', 'e', 'f'], builder.local_dependencies)
+        self.check_graph_order('h', ['i', 'g'], builder.local_dependencies)
+
 
     def test_resolve_dependencies_simple(self):
 
@@ -68,9 +90,6 @@ class BuilderTest(TestCase):
         # The two remote dependencies should be there.
         self.assertTrue('remote1' in builder.remote_dependencies)
         self.assertTrue('remote2' in builder.remote_dependencies)
-
-        # 'd' is the root of the graph.
-        self.assertEqual(builder.local_dependencies[0], 'd')
 
         # Do some checks on the order of the dependencies.
         self.check_graph_order('c', ['a', 'e', 'f'], builder.local_dependencies)

@@ -54,7 +54,7 @@ class Image:
 
         self.dependencies = list(set(self.dependencies))
 
-        logging.debug("{:s} has dependencies: {:s}".format(self.image_name, str(self.dependencies)))
+        logging.debug("{:s} has dependencies: {:s}".format(self.name, str(self.dependencies)))
 
     def _parse_manifest(self) -> None:
         """

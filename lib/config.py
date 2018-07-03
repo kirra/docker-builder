@@ -47,6 +47,9 @@ class Config:
         if 'push' in self.arguments:
             config['core']['push'] = self.arguments['push']
 
+        if 'downstream' in self.arguments:
+            config['core']['downstream'] = self.arguments['downstream']
+
         if 'logging_level' in self.arguments:
             config['logging']['level'] = self.arguments['logging_level']
 

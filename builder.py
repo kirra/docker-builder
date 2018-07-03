@@ -20,6 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--image', action='append', dest='images', help="Name of an image to build")
     parser.add_argument('-d', '--dir', action='append',
                         help="The directory to scan for Dockerfiles, multiple directories can be given, if none are given the current directory is used.")
+    parser.add_argument('--downstream', action="store_true", help="Only build the downstream dependencies when an --image is given")
     parser.add_argument('-v', '--verbose', action='store_true')
 
     # Parse CLI arguments
