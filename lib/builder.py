@@ -9,7 +9,7 @@ from lib.image import Image
 
 class Builder:
 
-    def __init__(self, config: Config):
+    def __init__(self, config: dict):
         self.config = config
 
         self.images = {}
@@ -37,10 +37,11 @@ class Builder:
         Index the images found in the current directory and build their dependency graph.
         """
 
-        for dockerfile in glob.glob('containers/*/Dockerfile'):
-            image = Image(dockerfile)
-            image.index()
-            self.images[image.name] = image
+        for directory in self.config['directories']:
+            for dockerfile in glob.glob("{:s}/*/Dockerfile".format(directory)):
+                image = Image(dockerfile)
+                image.index()
+                self.images[image.name] = image
 
         self._build_dependency_graph()
 

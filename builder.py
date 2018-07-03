@@ -45,5 +45,5 @@ if __name__ == '__main__':
 
     config = Config(file, arguments)
 
-    builder = Builder(config)
+    builder = Builder(config.config)
     builder.run()
