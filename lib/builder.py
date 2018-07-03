@@ -22,8 +22,6 @@ class Builder:
         """ Runs methods to build all images. """
         self.index_images()
 
-        logging.debug(self.config['images'])
-
         self.resolve_dependencies()
 
         if len(self.config['images']) > 0:
@@ -44,10 +42,14 @@ class Builder:
         """
 
         for directory in self.config['directories']:
+            logging.debug("Indexing images for directory {:s}".format(directory))
+
             for dockerfile in glob.glob("{:s}/*/Dockerfile".format(directory)):
                 image = Image(dockerfile)
                 image.index()
                 self.images[image.name] = image
+
+        logging.debug("Building dependency graph")
 
         self._build_dependency_graph()
 
@@ -57,9 +59,23 @@ class Builder:
         :return: None.
         """
 
-        logging.debug("\nResolving all images\n")
+        logging.debug('Resolving dependency order (all)')
 
-        self._split_dependencies(Resolver(self.graph.nodes.values()).resolve_dependencies())
+        self._split_dependencies(Resolver(list(self.graph.nodes.values())).resolve_dependencies())
+
+        logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
+        logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))
+
+    def resolve_dependency(self, name: str) -> None:
+        """
+        Resolve dependencies for a single indexed image and return them.
+        :param name: The name of the image to resolve the dependencies for.
+        :return:
+        """
+
+        logging.debug("Resolving dependency order ({:s})".format(name))
+
+        self._split_dependencies(Resolver([self.graph.local_nodes[name]]).resolve_dependencies())
 
         logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
         logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))

@@ -19,6 +19,7 @@ class Node:
         :param node: The node to create the edge with.
         :return: None.
         """
+
         self.edges.append(node)
 
     def __repr__(self):
@@ -66,6 +67,7 @@ class Resolver:
             self.resolve_dependency(node, resolved, [])
 
         logging.debug("Resolved dependency order {:s}".format(str(resolved)))
+
         return resolved
 
 

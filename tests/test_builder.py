@@ -24,9 +24,9 @@ class BuilderTest(TestCase):
     def create_simple_dependencies(self):
         images = {}
 
-        #   d      h
-        #  / \    / \
-        # b   c  i   g
+        #   d       h
+        #  / \     / \
+        # b   c   i   g
         #      \
         #       a
         #      / \
