@@ -14,6 +14,11 @@ class Node:
         self.edges = []
 
     def add_edge(self, node: 'Node') -> None:
+        """
+        Adds an edge to the node.
+        :param node: The node to create the edge with.
+        :return: None.
+        """
         self.edges.append(node)
 
     def __repr__(self):
@@ -30,7 +35,7 @@ class Resolver:
         :param node: The node to resolve the dependencies for.
         :param resolved: A list of resolved dependencies.
         :param unresolved: A list of unresolved dependencies.
-        :return: None
+        :return: None.
         """
 
         if node in resolved:
@@ -53,7 +58,7 @@ class Resolver:
     def resolve_dependencies(self) -> NodeList:
         """
         Resolves the dependencies for the graph.
-        :return:
+        :return: NodeList A list of resolved, ordered dependencies.
         """
 
         resolved = []
