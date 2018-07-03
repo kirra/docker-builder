@@ -2,7 +2,6 @@ import glob
 import logging
 import subprocess
 
-from lib.config import Config
 from lib.dependency import Node, Resolver, Graph, NodeList
 from lib.image import Image
 
@@ -21,7 +20,15 @@ class Builder:
     def run(self):
         """ Runs methods to build all images. """
         self.index_images()
-        self.resolve_dependencies()
+
+        logging.debug(self.config['images'])
+
+        if len(self.config['images']) > 0:
+            for image in self.config['images']:
+                self.resolve_dependency(image)
+        else:
+            self.resolve_dependencies()
+
         self.pull_images()
         self.build_images()
 
@@ -60,6 +67,8 @@ class Builder:
         :param name: The name of the image to resolve the dependencies for.
         :return:
         """
+
+        logging.debug("\nResolving image {:s}\n".format(name))
 
         self._split_dependencies(Resolver([self.graph.local_nodes[name]]).resolve_dependencies())
 
@@ -102,13 +111,12 @@ class Builder:
         :return:
         """
 
-        self.local_dependencies = []
-        self.remote_dependencies = []
-
         for dependency in dependencies:
-            if dependency.name in self.graph.local_nodes:
+
+            if dependency.name in self.graph.local_nodes and dependency.name not in self.local_dependencies:
                 self.local_dependencies.append(dependency.name)
-            else:
+
+            elif dependency.name not in self.remote_dependencies:
                 self.remote_dependencies.append(dependency.name)
 
     def build_images(self):

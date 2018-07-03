@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--push', action='store_true', default=True,
                         help="Push the image(s) to the registry after building")
     parser.add_argument('-r', '--registry', action='append', help="The registries to push the images to")
-    parser.add_argument('-i', '--image', action='append', help="Name of the images to build")
+    parser.add_argument('-i', '--image', action='append', dest='images', help="Name of an image to build")
     parser.add_argument('-d', '--dir', action='append',
                         help="The directory to scan for Dockerfiles, multiple directories can be given, if none are given the current directory is used.")
     parser.add_argument('-v', '--verbose', action='store_true')

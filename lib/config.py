@@ -56,6 +56,9 @@ class Config:
         if self.arguments.get('registry') is not None:
             config['registries'] = self.arguments['registry']
 
+        if self.arguments.get('images') is not None:
+            config['images'] = self.arguments['images']
+
         self.config = config
 
     def _parse_file_config(self) -> dict:
@@ -68,7 +71,8 @@ class Config:
             'core': {},
             'logging': {},
             'registries': [],
-            'directories': []
+            'directories': [],
+            'images': [],
         }
 
         if 'core' in self.file:
