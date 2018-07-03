@@ -21,15 +21,8 @@ class Builder:
     def run(self):
         """ Runs methods to build all images. """
         self.index_images()
-
-        logging.debug("\nResolving all images\n")
         self.resolve_dependencies()
         self.pull_images()
-
-        logging.debug("\nResolving single image\n")
-        self.resolve_dependency('kirra-php:7.1')
-        self.pull_images()
-
         self.build_images()
 
     def index_images(self) -> None:
@@ -50,6 +43,8 @@ class Builder:
         Resolve the dependencies of all indexed images.
         :return: None.
         """
+
+        logging.debug("\nResolving all images\n")
 
         self._split_dependencies(Resolver(self.graph.nodes.values()).resolve_dependencies())
 
