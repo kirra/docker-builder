@@ -25,16 +25,16 @@ class Builder:
         self.resolve_dependencies()
 
         if len(self.config['images']) > 0:
-            #self.resolve_dependency(image)
-
             if self.config['core']['downstream']:
+                self.filter_dependencies_downstream(self.config['images'])
+            else:
                 self.filter_dependencies(self.config['images'])
 
-        #self.pull_images()
-        #self.build_images()
+        self.pull_images()
+        self.build_images()
 
-        #if self.config['push']:
-        #    self.push_images()
+        if self.config['core']['push']:
+            self.push_images()
 
     def index_images(self) -> None:
         """
@@ -121,7 +121,7 @@ class Builder:
             if dependency.name in self.graph.local_nodes and dependency.name not in self.local_dependencies:
                 self.local_dependencies.append(dependency.name)
 
-            elif dependency.name not in self.remote_dependencies:
+            elif dependency.name in self.graph.remote_nodes and dependency.name not in self.remote_dependencies:
                 self.remote_dependencies.append(dependency.name)
 
     def build_images(self):
@@ -148,7 +148,12 @@ class Builder:
             for registry in self.config['registries']:
                 image.push(registry)
 
-    def filter_dependencies(self, images: List[str]):
+    def filter_dependencies_downstream(self, images: List[str]) -> None:
+        """
+        Filters the dependency order downstream for a list of images.
+        :param images: A list of images to resolve the downstream dependencies for.
+        :return: None.
+        """
 
         local_dependencies = images
 
@@ -164,6 +169,32 @@ class Builder:
 
         self.local_dependencies = local_dependencies
         self.remote_dependencies = []
+
+        logging.debug("Filtered downstream order (local): {:s}".format(str(self.local_dependencies)))
+        logging.debug("Filtered downstream order (remote): {:s}".format(str(self.remote_dependencies)))
+
+    def filter_dependencies(self, images: List[str]) -> None:
+        """
+        Filters the dependency order for a list of images.
+        :param images: A list of images to resolve the dependency order for.
+        :return: None.
+        """
+
+        for image in images:
+            self.resolve_dependency(image)
+
+        local_dependencies = self.local_dependencies
+        remote_dependencies = self.remote_dependencies
+
+        self.filter_dependencies_downstream(images)
+
+        downstream_local_dependencies = self.local_dependencies
+        for dependency in downstream_local_dependencies:
+            if dependency not in local_dependencies:
+                local_dependencies.append(dependency)
+
+        self.local_dependencies = local_dependencies
+        self.remote_dependencies = remote_dependencies
 
         logging.debug("Filtered order (local): {:s}".format(str(self.local_dependencies)))
         logging.debug("Filtered order (remote): {:s}".format(str(self.remote_dependencies)))

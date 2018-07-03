@@ -1,4 +1,5 @@
 from configparser import ConfigParser
+from typing import Dict, List
 from unittest import TestCase
 
 from lib.builder import Builder
@@ -8,20 +9,21 @@ from lib.image import Image
 
 
 class BuilderTest(TestCase):
-
-    def create_builder(self):
-        configparser = ConfigParser()
-        config = Config(configparser, {})
-        builder = Builder(config)
+    @staticmethod
+    def create_builder():
+        config_parser = ConfigParser()
+        config = Config(config_parser, {})
+        builder = Builder(config.config)
         return builder
 
-    def create_image(self, name, dependencies, images):
+    @staticmethod
+    def create_image(name: str, dependencies: list, images: dict):
         image = Image('/tmp/' + name)
         image.name = name
         image.dependencies = dependencies
         images[name] = image
 
-    def create_simple_dependencies(self):
+    def create_simple_dependencies(self) -> Dict[str, Image]:
         images = {}
 
         #   d       h
@@ -46,7 +48,8 @@ class BuilderTest(TestCase):
 
         return images
 
-    def check_graph_order(self, target, before, order):
+    def check_graph_order(self, target: str, before: List[str], order: List[str]):
+
         check_list = {key: False for key in before}
         check_list[target] = False
 
@@ -61,21 +64,7 @@ class BuilderTest(TestCase):
                 self.assertEqual(sum(bla), 0)
                 break
 
-    def test_filter_dependencies(self):
-
-        builder = self.create_builder()
-        images = self.create_simple_dependencies()
-
-        builder.images = images
-        builder._build_dependency_graph()
-        builder.resolve_dependencies()
-        builder.filter_dependencies(['c', 'h'])
-
-        self.check_graph_order('c', ['a', 'e', 'f'], builder.local_dependencies)
-        self.check_graph_order('h', ['i', 'g'], builder.local_dependencies)
-
-
-    def test_resolve_dependencies_simple(self):
+    def test_resolve_dependencies_simple(self) -> None:
 
         builder = self.create_builder()
         images = self.create_simple_dependencies()
@@ -95,8 +84,7 @@ class BuilderTest(TestCase):
         self.check_graph_order('c', ['a', 'e', 'f'], builder.local_dependencies)
         self.check_graph_order('a', ['e', 'f'], builder.local_dependencies)
 
-
-    def test_resolve_dependencies_circular(self):
+    def test_resolve_dependencies_circular(self) -> None:
 
         builder = self.create_builder()
 
@@ -116,7 +104,7 @@ class BuilderTest(TestCase):
         with self.assertRaises(ResolverException):
             builder.resolve_dependencies()
 
-    def test_resolve_dependency(self):
+    def test_resolve_dependency(self) -> None:
 
         builder = self.create_builder()
         images = self.create_simple_dependencies()
@@ -134,8 +122,34 @@ class BuilderTest(TestCase):
         self.assertTrue('remote1' not in builder.remote_dependencies)
         self.assertTrue('remote2' in builder.remote_dependencies)
 
-        # 'd' is still the root.
-        self.assertEqual(builder.local_dependencies[0], 'd')
+        self.check_graph_order('d', ['c'], builder.local_dependencies)
+
+    def test_filter_dependencies(self) -> None:
+
+        builder = self.create_builder()
+        images = self.create_simple_dependencies()
+
+        builder.images = images
+        builder._build_dependency_graph()
+        builder.resolve_dependencies()
+        builder.filter_dependencies(['c', 'h'])
+
+        self.check_graph_order('d', ['c', 'a', 'e', 'f'], builder.local_dependencies)
+        self.check_graph_order('h', ['i', 'g'], builder.local_dependencies)
+
+    def test_filter_dependencies_downstream(self) -> None:
+
+        builder = self.create_builder()
+        images = self.create_simple_dependencies()
+
+        builder.images = images
+        builder._build_dependency_graph()
+        builder.resolve_dependencies()
+        builder.filter_dependencies_downstream(['c', 'h'])
+
+        # 'd' & 'b' should no longer be present
+        self.assertTrue('d' not in builder.local_dependencies)
+        self.assertTrue('b' not in builder.local_dependencies)
 
         self.check_graph_order('c', ['a', 'e', 'f'], builder.local_dependencies)
-        self.check_graph_order('a', ['e', 'f'], builder.local_dependencies)
+        self.check_graph_order('h', ['i', 'g'], builder.local_dependencies)
