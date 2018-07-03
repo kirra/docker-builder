@@ -62,9 +62,9 @@ class Image:
         :return: None.
         """
 
-        metadata_file = "{}/manifest.json".format(self.dir_name)
+        manifest_file = "{}/manifest.json".format(self.dir_name)
 
-        self.manifest = json.load(open(metadata_file, 'r'))
+        self.manifest = json.load(open(manifest_file, 'r'))
 
         self.name = self.image_name
         if 'local_tag' in self.manifest:
