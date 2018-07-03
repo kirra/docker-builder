@@ -1,5 +1,5 @@
 import logging
-from typing import List, NewType
+from typing import List
 
 NodeList = List['Node']
 
@@ -21,8 +21,8 @@ class Node:
 
 
 class Resolver:
-    def __init__(self, graph):
-        self.graph = graph
+    def __init__(self, nodes: NodeList):
+        self.nodes = nodes
 
     def resolve_dependency(self, node: Node, resolved: NodeList, unresolved: NodeList) -> None:
         """
@@ -43,7 +43,7 @@ class Resolver:
 
                 if edge in unresolved:
                     raise ResolverException(
-                        'Circular dependency detected: %s -&gt; %s'.format(node.name, edge.name))
+                        "Circular dependency detected: %s -> %s".format(node.name, edge.name))
 
                 self.resolve_dependency(edge, resolved, unresolved)
 
@@ -57,7 +57,7 @@ class Resolver:
         """
 
         resolved = []
-        for node in self.graph:
+        for node in self.nodes:
             self.resolve_dependency(node, resolved, [])
 
         logging.debug("Resolved dependency order {:s}".format(str(resolved)))
