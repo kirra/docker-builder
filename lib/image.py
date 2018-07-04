@@ -140,6 +140,8 @@ class Image:
         if 'local_tag' not in self.manifest or 'registry_tag' not in self.manifest:
             return
 
+        logging.debug("Pushing {}".format(self.name))
+
         registry_tag = "{:s}/{:s}".format(
             registry.rstrip('/'), self.manifest['registry_tag'].lstrip('/'))
 

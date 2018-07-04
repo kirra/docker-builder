@@ -144,9 +144,9 @@ class Builder:
     def push_images(self):
         """ Push the images to the registries. """
 
-        for image in self.images:
+        for dependency in self.local_dependencies:
             for registry in self.config['registries']:
-                image.push(registry)
+                self.images[dependency].push(registry)
 
     def filter_dependencies_downstream(self, images: List[str]) -> None:
         """
