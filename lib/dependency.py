@@ -1,11 +1,8 @@
-import logging
-from typing import List
+import copy
+from typing import List, Dict
 
 NodeList = List['Node']
-
-
-class ResolverException(Exception):
-    pass
+NodeDict = Dict[str, 'Node']
 
 
 class Node:
@@ -13,87 +10,152 @@ class Node:
         self.name = name
         self.edges = []
 
-    def add_edge(self, node: 'Node') -> None:
+    def add_edge(self, edge: 'Node') -> None:
         """
         Adds an edge to the node.
-        :param node: The node to create the edge with.
-        :return: None.
+        :param Node edge: The edge to add.
         """
-
-        self.edges.append(node)
+        self.edges.append(edge)
 
     def __repr__(self):
         return self.name
 
 
-class Resolver:
-    def __init__(self, nodes: NodeList):
-        self.nodes = nodes
-
-    def resolve_dependency(self, node: Node, resolved: NodeList, unresolved: NodeList) -> None:
-        """
-        Resolves the dependencies for a single node.
-        :param node: The node to resolve the dependencies for.
-        :param resolved: A list of resolved dependencies.
-        :param unresolved: A list of unresolved dependencies.
-        :return: None.
-        """
-
-        if node in resolved:
-            return
-
-        unresolved.append(node)
-
-        for edge in node.edges:
-            if edge not in resolved:
-
-                if edge in unresolved:
-                    raise ResolverException(
-                        "Circular dependency detected: %s -> %s".format(node.name, edge.name))
-
-                self.resolve_dependency(edge, resolved, unresolved)
-
-        resolved.append(node)
-        unresolved.remove(node)
-
-    def resolve_dependencies(self) -> NodeList:
-        """
-        Resolves the dependencies for the graph.
-        :return: NodeList A list of resolved, ordered dependencies.
-        """
-
-        resolved = []
-        for node in self.nodes:
-            self.resolve_dependency(node, resolved, [])
-
-        logging.debug("Resolved dependency order {:s}".format(str(resolved)))
-
-        return resolved
-
-
 class Graph:
     def __init__(self):
-        self.local_nodes = {}
-        self.remote_nodes = {}
         self.nodes = {}
 
-    def add_local(self, node: Node) -> None:
+    def add_node(self, node: Node) -> None:
         """
-        Adds a node to the local nodes.
-        :param node: The node to add.
-        :return: None.
-        """
-
-        self.nodes[node.name] = node
-        self.local_nodes[node.name] = node
-
-    def add_remote(self, node: Node) -> None:
-        """
-        Adds a node to the remote nodes.
-        :param node: The node to add.
-        :return: None.
+        Adds a node to the graph.
+        :param Node node: The node to add.
         """
 
-        self.nodes[node.name] = node
-        self.remote_nodes[node.name] = node
+        if node.name not in self.nodes:
+            self.nodes[node.name] = node
 
+    @staticmethod
+    def create(nodes: NodeList) -> 'Graph':
+        """
+        Builds a graph from a list nodes.
+        :param NodeList nodes: The nodes to build a graph from.
+        :return Graph: The graph.
+        """
+
+        graph = Graph()
+        for node in nodes:
+            graph.add_node(node)
+
+        return graph
+
+    @staticmethod
+    def filter(graph: 'Graph', nodes: NodeList, downstream: bool = False) -> 'Graph':
+        """
+        Creates a new graph by filtering an existing graph so only the nodes and dependent nodes remain.
+        :param Graph graph: The graph to filter.
+        :param NodeList nodes: The nodes to remain after filtering
+        :param bool downstream: If True, only downstream nodes are returned in the filtered graph.
+        :return Graph: The filtered graph.
+        """
+
+        # Start by searching for downstream nodes, append them to the list
+        for node in nodes:
+            for candidate in graph.nodes.values():
+                if node in candidate.edges:
+                    nodes.append(candidate)
+
+        # Return early when only downstream nodes are required, remove edges that aren't in the node list
+        if downstream:
+            for node in nodes:
+                edges = copy.copy(node.edges)
+                for edge in edges:
+                    if edge not in nodes:
+                        node.edges.remove(edge)
+
+            return Graph.create(nodes)
+
+        # Resolve all nodes upstream
+        visited_nodes = set()
+        while nodes:
+            node = nodes.pop(0)
+            if node.name not in visited_nodes:
+                visited_nodes.add(node.name)
+
+            for edge in node.edges:
+                if edge.name not in visited_nodes:
+                    nodes.append(edge)
+                    visited_nodes.add(edge.name)
+
+        # Create a new graph with the filtered node list
+        nodes = {name: graph.nodes[name] for name in visited_nodes}
+
+        return Graph.create(list(nodes.values()))
+
+
+class ResolverException(Exception):
+    pass
+
+
+class Resolver:
+    def __init__(self, graph: Graph):
+        self.graph = graph
+
+    def _topological_sort(self) -> List[str]:
+        """
+        Does a topological sort of a dependency graph.
+        :return List[str]: The topological order of the dependency graph.
+        """
+
+        result = []
+        zero_in_degree = []
+
+        nodes = self.graph.nodes
+        in_degree = {node: 0 for node in nodes}
+
+        for node in nodes:
+            for edge in nodes[node].edges:
+                in_degree[edge.name] += 1
+
+        for d in in_degree:
+            if in_degree[d] == 0:
+                zero_in_degree.append(d)
+
+        while zero_in_degree:
+            n = zero_in_degree.pop(0)
+            result.append(n)
+
+            for edge in nodes[n].edges:
+                in_degree[edge.name] -= 1
+                if in_degree[edge.name] == 0:
+                    zero_in_degree.append(edge.name)
+
+        return result
+
+    def resolve(self) -> NodeList:
+        """
+        Returns the order for a dependency graph.
+        :return NodeList: The dependency order.
+        """
+
+        order = self._topological_sort()[::-1]
+        if len(order) != len(self.graph.nodes):
+            cyclic = set(self.graph.nodes.keys()).difference(set(order))
+            raise ResolverException("Cyclic dependencies detected in nodes {:s}.".format(str(cyclic)))
+
+        return [self.graph.nodes[name] for name in order]
+
+    def resolve_nodes(self, nodes: NodeList, downstream: bool = False) -> NodeList:
+        """
+        Returns the order for a single node.
+        :param NodeList nodes: A list of nodes to return the dependency order for.
+        :param bool downstream: If True, only downstream dependencies are returned.
+        :return NodeList: The dependency order.
+        """
+
+        original = self.graph
+        self.graph = Graph.filter(self.graph, nodes, downstream)
+
+        order = self.resolve()
+        self.graph = original
+
+        return order
