@@ -128,7 +128,7 @@ class Builder:
         """
 
         for dependency in self.local_dependencies:
-            self.images[dependency.name].create()
+            self.images[dependency.name].build()
 
     def pull_images(self) -> None:
         """
