@@ -82,7 +82,7 @@ class DependencyTest(unittest.TestCase):
 
         resolver = Resolver(graph)
 
-        # There is a circular dependency, therefor we expect a ResolverException
+        # There is a circular dependency, therefore we expect a ResolverException
         with self.assertRaises(ResolverException):
             resolver.resolve()
 
