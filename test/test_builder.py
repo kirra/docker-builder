@@ -1,8 +1,7 @@
 # Todo: This test should be rewritten so only the builder is tested!
-
+import unittest
 from configparser import ConfigParser
 from typing import Dict, List
-from unittest import TestCase
 
 from lib.builder import Builder
 from lib.config import Config
@@ -10,7 +9,8 @@ from lib.dependency import ResolverException
 from lib.image import Image
 
 
-class BuilderTest(TestCase):
+@unittest.skip
+class BuilderTest(unittest.TestCase):
     @staticmethod
     def create_builder():
         config_parser = ConfigParser()
@@ -125,33 +125,3 @@ class BuilderTest(TestCase):
         self.assertTrue('remote2' in builder.remote_dependencies)
 
         self.check_graph_order('d', ['c'], builder.local_dependencies)
-
-    def test_filter_dependencies(self) -> None:
-
-        builder = self.create_builder()
-        images = self.create_simple_dependencies()
-
-        builder.images = images
-        builder._build_dependency_graph()
-        builder.resolve_dependencies()
-        builder.filter_dependencies(['c', 'h'])
-
-        self.check_graph_order('d', ['c', 'a', 'e', 'f'], builder.local_dependencies)
-        self.check_graph_order('h', ['i', 'g'], builder.local_dependencies)
-
-    def test_filter_dependencies_downstream(self) -> None:
-
-        builder = self.create_builder()
-        images = self.create_simple_dependencies()
-
-        builder.images = images
-        builder._build_dependency_graph()
-        builder.resolve_dependencies()
-        builder.filter_dependencies_downstream(['c', 'h'])
-
-        # 'd' & 'b' should no longer be present
-        self.assertTrue('d' not in builder.local_dependencies)
-        self.assertTrue('b' not in builder.local_dependencies)
-
-        self.check_graph_order('c', ['a', 'e', 'f'], builder.local_dependencies)
-        self.check_graph_order('h', ['i', 'g'], builder.local_dependencies)
