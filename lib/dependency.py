@@ -37,7 +37,7 @@ class Graph:
     @staticmethod
     def create(nodes: NodeList) -> 'Graph':
         """
-        Builds a graph from a list nodes.
+        Builds a graph from a list of nodes.
         :param NodeList nodes: The nodes to build a graph from.
         :return Graph: The graph.
         """
@@ -146,7 +146,7 @@ class Resolver:
 
     def resolve_nodes(self, nodes: NodeList, downstream: bool = False) -> NodeList:
         """
-        Returns the order for a single node.
+        Returns the order for a list of nodes.
         :param NodeList nodes: A list of nodes to return the dependency order for.
         :param bool downstream: If True, only downstream dependencies are returned.
         :return NodeList: The dependency order.
