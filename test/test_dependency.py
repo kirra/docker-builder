@@ -138,6 +138,7 @@ class DependencyTest(unittest.TestCase):
         self.assertFalse(graph.nodes['c'] in order)
         self.assertFalse(graph.nodes['d'] in order)
         self.assertFalse(graph.nodes['i'] in order)
+        self.assertFalse(graph.nodes['j'] in order)
 
         # Check order of the dependencies
         self.assert_dependency_order(graph.nodes['a'], [graph.nodes['e'], graph.nodes['f']], order)
