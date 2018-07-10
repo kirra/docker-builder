@@ -1,10 +1,9 @@
 import glob
 import logging
 import subprocess
-from typing import List
 
-from lib.dependency import Node, Resolver, Graph, NodeList
-from lib.image import Image
+from lib.dependency import Graph, Node, NodeList, Resolver
+from lib.image import Image, ImageList
 
 
 class Builder:
@@ -18,17 +17,20 @@ class Builder:
         self.local_dependencies = []
         self.remote_dependencies = []
 
-    def run(self):
-        """ Runs methods to build all images. """
+    def run(self) -> None:
+        """
+        Runs methods to build all images.
+        """
+
+        # Start by indexing all images
         self.index_images()
 
-        self.resolve_dependencies()
-
+        # Either resolve all dependencies or a list of provided images (either full or downstream)
         if len(self.config['images']) > 0:
-            if self.config['core']['downstream']:
-                self.filter_dependencies_downstream(self.config['images'])
-            else:
-                self.filter_dependencies(self.config['images'])
+            images = {image: self.images[image] for image in self.config['images']}
+            self.resolve_dependencies(list(images.values()), self.config['core']['downstream'])
+        else:
+            self.resolve_all_dependencies()
 
         self.pull_images()
         self.build_images()
@@ -49,11 +51,11 @@ class Builder:
                 image.index()
                 self.images[image.name] = image
 
-        logging.debug("Building dependency graph")
+        logging.debug('Building dependency graph')
 
         self._build_dependency_graph()
 
-    def resolve_dependencies(self) -> None:
+    def resolve_all_dependencies(self) -> None:
         """
         Resolve the dependencies of all indexed images.
         :return: None.
@@ -61,21 +63,24 @@ class Builder:
 
         logging.debug('Resolving dependency order (all)')
 
-        self._split_dependencies(Resolver(list(self.graph.nodes.values())).resolve_dependencies())
+        self._split_dependencies(Resolver(self.graph).resolve())
 
         logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
         logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))
 
-    def resolve_dependency(self, name: str) -> None:
+    def resolve_dependencies(self, images: ImageList, downstream: bool = False) -> None:
         """
         Resolve dependencies for a single indexed image and return them.
-        :param name: The name of the image to resolve the dependencies for.
-        :return:
+        :param images: A list of images to resolve the dependencies for
+        :param bool downstream: If the dependencies should only be resolved downstream.
         """
 
-        logging.debug("Resolving dependency order ({:s})".format(name))
+        logging.debug("Resolving dependency order ({:s}), downstream only: {:s}"
+                      .format(str([image.name for image in images]), str(downstream)))
 
-        self._split_dependencies(Resolver([self.graph.local_nodes[name]]).resolve_dependencies())
+        nodes = {name: self.graph.nodes[name] for name in [image.name for image in images]}
+
+        self._split_dependencies(Resolver(self.graph).resolve_nodes(list(nodes.values()), downstream))
 
         logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
         logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))
@@ -88,113 +93,60 @@ class Builder:
         """
 
         images = self.images.values()
+        nodes = {}
 
-        graph = Graph()
         for image in images:
-            graph.add_local(Node(image.name))
+            nodes[image.name] = Node(image.name)
 
             for dependency in image.dependencies:
-                if dependency not in graph.nodes:
-                    if dependency in self.images:
-                        graph.add_local(Node(dependency))
-                    else:
-                        graph.add_remote(Node(dependency))
+                if dependency not in nodes:
+                    nodes[dependency] = Node(dependency)
 
         for image in images:
             for dependency in image.dependencies:
-                graph.nodes[image.name].add_edge(graph.nodes[dependency])
+                nodes[image.name].add_edge(nodes[dependency])
 
-        logging.debug("Dependency graph (local nodes): {:s}".format(str(list(graph.local_nodes.keys()))))
-        logging.debug("Dependency graph (remote nodes): {:s}".format(str(list(graph.remote_nodes.keys()))))
+        self.graph = Graph.create(list(nodes.values()))
 
-        self.graph = graph
+        logging.debug("Dependency graph: {:s}".format(str(list(self.graph.nodes.keys()))))
 
     def _split_dependencies(self, dependencies: NodeList) -> None:
         """
         Split dependencies into local and remote dependencies.
-        :param dependencies:
-        :return:
+        :param NodeList dependencies: The dependencies to split.
         """
 
         for dependency in dependencies:
+            if dependency.name in self.images and dependency.name not in self.local_dependencies:
+                self.local_dependencies.append(dependency)
+            elif dependency.name not in self.images and dependency.name not in self.remote_dependencies:
+                self.remote_dependencies.append(dependency)
 
-            if dependency.name in self.graph.local_nodes and dependency.name not in self.local_dependencies:
-                self.local_dependencies.append(dependency.name)
-
-            elif dependency.name in self.graph.remote_nodes and dependency.name not in self.remote_dependencies:
-                self.remote_dependencies.append(dependency.name)
-
-    def build_images(self):
-        """ Build the indexed local Images in order of dependencies, lowest number of dependencies
-        first. """
+    def build_images(self) -> None:
+        """
+        Build the indexed Images in order of dependencies, lowest number of dependencies first.
+        """
 
         for dependency in self.local_dependencies:
-            self.images[dependency].build()
+            self.images[dependency.name].build()
 
-    def pull_images(self):
-        """ Pull remote dependencies. """
+    def pull_images(self) -> None:
+        """
+        Pull remote dependencies.
+        """
 
-        for image in self.remote_dependencies:
-            logging.debug("Pulling image {:s}".format(image))
+        for dependency in self.remote_dependencies:
+            logging.debug("Pulling image {:s}".format(dependency.name))
 
-            command = "docker pull {:s}".format(image).split(" ")
+            command = "docker pull {:s}".format(dependency.name).split(" ")
             process = subprocess.Popen(command)
             process.wait()
 
-    def push_images(self):
-        """ Push the images to the registries. """
+    def push_images(self) -> None:
+        """
+        Push the images to the registries.
+        """
 
         for dependency in self.local_dependencies:
             for registry in self.config['registries']:
-                self.images[dependency].push(registry)
-
-    def filter_dependencies_downstream(self, images: List[str]) -> None:
-        """
-        Filters the dependency order downstream for a list of images.
-        :param images: A list of images to resolve the downstream dependencies for.
-        :return: None.
-        """
-
-        local_dependencies = images
-
-        index = min([self.local_dependencies.index(i) for i in images])
-
-        for dependency in self.local_dependencies[index:]:
-            image = self.images[dependency]
-
-            for image_dependency in image.dependencies:
-                if image_dependency in local_dependencies:
-                    local_dependencies.append(image.name)
-                    break
-
-        self.local_dependencies = local_dependencies
-        self.remote_dependencies = []
-
-        logging.debug("Filtered downstream order (local): {:s}".format(str(self.local_dependencies)))
-        logging.debug("Filtered downstream order (remote): {:s}".format(str(self.remote_dependencies)))
-
-    def filter_dependencies(self, images: List[str]) -> None:
-        """
-        Filters the dependency order for a list of images.
-        :param images: A list of images to resolve the dependency order for.
-        :return: None.
-        """
-
-        for image in images:
-            self.resolve_dependency(image)
-
-        local_dependencies = self.local_dependencies
-        remote_dependencies = self.remote_dependencies
-
-        self.filter_dependencies_downstream(images)
-
-        downstream_local_dependencies = self.local_dependencies
-        for dependency in downstream_local_dependencies:
-            if dependency not in local_dependencies:
-                local_dependencies.append(dependency)
-
-        self.local_dependencies = local_dependencies
-        self.remote_dependencies = remote_dependencies
-
-        logging.debug("Filtered order (local): {:s}".format(str(self.local_dependencies)))
-        logging.debug("Filtered order (remote): {:s}".format(str(self.remote_dependencies)))
+                self.images[dependency.name].push(registry)

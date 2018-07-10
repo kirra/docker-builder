@@ -4,6 +4,9 @@ import os
 import re
 import subprocess
 from contextlib import contextmanager
+from typing import List
+
+ImageList = List['Image']
 
 
 @contextmanager
