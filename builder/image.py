@@ -98,7 +98,7 @@ class Image:
         if 'post_build' not in self.manifest:
             return
 
-        logging.debug("Running post build scripts for {}.".format(self.name))
+        logging.debug("Running post build scripts for {}".format(self.name))
 
         with working_dir(self.dir_name):
             for line in self.manifest['post_build']:
