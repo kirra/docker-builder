@@ -1,7 +1,7 @@
 import unittest
 from typing import Dict, List
 
-from lib.dependency import Graph, Node, NodeList, Resolver, ResolverException
+from builder.dependency import Graph, Node, NodeList, Resolver, ResolverException
 
 
 class DependencyTest(unittest.TestCase):
