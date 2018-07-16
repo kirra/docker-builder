@@ -2,8 +2,8 @@ import glob
 import logging
 import subprocess
 
-from lib.dependency import Graph, Node, NodeList, Resolver
-from lib.image import Image, ImageList
+from builder.dependency import Graph, Node, NodeList, Resolver
+from builder.image import Image, ImageList
 
 
 class Builder:

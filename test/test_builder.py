@@ -3,10 +3,10 @@ import unittest
 from configparser import ConfigParser
 from typing import Dict, List
 
-from lib.builder import Builder
-from lib.config import Config
-from lib.dependency import ResolverException
-from lib.image import Image
+from builder.builder import Builder
+from builder.config import Config
+from builder.dependency import ResolverException
+from builder.image import Image
 
 
 @unittest.skip

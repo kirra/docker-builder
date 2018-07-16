@@ -3,8 +3,8 @@ import configparser
 import logging
 import os
 
-from lib.builder import Builder
-from lib.config import Config
+from builder.builder import Builder
+from builder.config import Config
 
 
 if __name__ == '__main__':
