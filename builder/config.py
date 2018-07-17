@@ -1,6 +1,5 @@
 from configparser import ConfigParser
 import logging
-from typing import Union
 
 
 class Config:
@@ -14,38 +13,20 @@ class Config:
 
         logging.debug("Initialized config: {:s}.".format(str(self.config)))
 
-
-    def _write(self) -> None:
-        """
-        Writes the config file.
-        :return: None
-        """
-        self.config.write(self.config_file)
-
-    def _read(self, section: str, key: str) -> Union[str, bool, None]:
-        """
-        Reads the config file.
-        :param section: The section to read the key from.
-        :param key: The key to get the value for.
-        :return:
-        """
-
-        if section not in self.config:
-            return None
-        elif key not in self.config[section]:
-            return None
-
-        return self.config[section][key]
-
     def _merge_config(self) -> None:
         """
-        Merges the file config and the CLI arguments. CLI arguments always take precedence over file config.
+        Merges the file config and the CLI arguments. CLI arguments always take precedence over file
+        config.
         :return: None.
         """
 
         config = self._parse_file_config()
-        if 'push' in self.arguments:
+
+        if self.arguments.get('push') is True:
             config['core']['push'] = self.arguments['push']
+
+        if self.arguments.get('no_push') is False:
+            config['core']['push'] = self.arguments['no_push']
 
         if 'downstream' in self.arguments:
             config['core']['downstream'] = self.arguments['downstream']
