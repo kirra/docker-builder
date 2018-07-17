@@ -1,6 +1,8 @@
 import glob
 import logging
+import os
 import subprocess
+import sys
 
 from builder.dependency import Graph, Node, NodeList, Resolver
 from builder.image import Image, ImageList
@@ -24,6 +26,7 @@ class Builder:
         """
 
         self.index_images()
+        self.build_dependency_graph()
 
         # Either resolve all dependencies or a list of provided images (either full or downstream)
         if len(self.config['images']) > 0:
@@ -32,7 +35,7 @@ class Builder:
         else:
             self.resolve_all_dependencies()
 
-        self.pull_images()
+        self.pull_remote_images()
         self.build_images()
 
         if self.config['core']['push']:
@@ -44,16 +47,21 @@ class Builder:
         """
 
         for directory in self.config['directories']:
-            logging.debug("Indexing images for directory {:s}".format(directory))
+
+            if not os.path.isdir(directory):
+                logging.warning("{:s} is not a directory, skipping".format(directory))
+                continue
+
+            logging.info("Indexing images for directory {:s}".format(directory))
 
             for dockerfile in glob.glob("{:s}/*/Dockerfile".format(directory)):
                 image = Image(dockerfile)
                 image.index()
                 self.images[image.name] = image
 
-        logging.debug('Building dependency graph')
-
-        self._build_dependency_graph()
+        if len(self.images) == 0:
+            logging.info('No images found')
+            sys.exit(1)
 
     def resolve_all_dependencies(self) -> None:
         """
@@ -85,7 +93,7 @@ class Builder:
         logging.debug("Dependency order (local): {:s}".format(str(self.local_dependencies)))
         logging.debug("Dependency order (remote): {:s}".format(str(self.remote_dependencies)))
 
-    def _build_dependency_graph(self) -> None:
+    def build_dependency_graph(self) -> None:
         """
         Builds a dependency graph for the images. Starts by creating a node for every image and
         dependency and then adding the edges.
@@ -132,7 +140,7 @@ class Builder:
         for dependency in self.local_dependencies:
             self.images[dependency.name].build(self.stdout)
 
-    def pull_images(self) -> None:
+    def pull_remote_images(self) -> None:
         """
         Pull remote dependencies.
         """

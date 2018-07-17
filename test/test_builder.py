@@ -11,6 +11,7 @@ from builder.image import Image
 
 @unittest.skip
 class BuilderTest(unittest.TestCase):
+
     @staticmethod
     def create_builder():
         config_parser = ConfigParser()
@@ -72,7 +73,7 @@ class BuilderTest(unittest.TestCase):
         images = self.create_simple_dependencies()
 
         builder.images = images
-        builder._build_dependency_graph()
+        builder.build_dependency_graph()
         builder.resolve_dependencies()
 
         # All the images should be present.
@@ -100,7 +101,7 @@ class BuilderTest(unittest.TestCase):
         # c - b
 
         builder.images = images
-        builder._build_dependency_graph()
+        builder.build_dependency_graph()
 
         # There is a circular dependency, therefor we expect a ResolverException.
         with self.assertRaises(ResolverException):
@@ -112,7 +113,7 @@ class BuilderTest(unittest.TestCase):
         images = self.create_simple_dependencies()
 
         builder.images = images
-        builder._build_dependency_graph()
+        builder.build_dependency_graph()
 
         # Get the order for image 'c'.
         builder.resolve_dependency('c')
