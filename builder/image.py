@@ -24,10 +24,10 @@ class Image:
 
         self.dependencies = []
         self.manifest = {}
-        self.name = None
 
         self.dir_name = os.path.dirname(self.file_path)
         self.image_name = self.dir_name
+        self.name = self.image_name
 
     def index(self) -> None:
         """
@@ -67,9 +67,13 @@ class Image:
 
         manifest_file = "{}/manifest.json".format(self.dir_name)
 
-        self.manifest = json.load(open(manifest_file, 'r'))
+        try:
+            self.manifest = json.load(open(manifest_file, 'r'))
 
-        self.name = self.image_name
+        except FileNotFoundError:
+            logging.debug("No manifest file found for {:s}".format(self.name))
+            return
+
         if 'local_tag' in self.manifest:
             self.name = self.manifest['local_tag']
 
