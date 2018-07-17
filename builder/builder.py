@@ -79,7 +79,7 @@ class Builder:
     def resolve_dependencies(self, images: ImageList, downstream: bool = False) -> None:
         """
         Resolve dependencies for a single indexed image and return them.
-        :param images: A list of images to resolve the dependencies for
+        :param images: A list of images to resolve the dependencies for.
         :param bool downstream: If the dependencies should only be resolved downstream.
         """
 

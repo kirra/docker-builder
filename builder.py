@@ -64,6 +64,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     arguments = vars(args)
 
+    # Setup logger
     logging.basicConfig(format='%(levelname)s: %(message)s')
     logger = logging.getLogger()
     if args.verbose:

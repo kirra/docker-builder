@@ -92,7 +92,7 @@ class Image:
     def run_post_build_scripts(self, stdout: Union[None, int]=None) -> None:
         """
         Runs scripts defined in the manifest's `post_build` section.
-        :param stdout:
+        :param int stdout: stdout for the subprocess.
         :return: None.
         """
 
@@ -110,7 +110,7 @@ class Image:
         """
         Builds a Docker image using the settings in the manifest. If a `local_tag` isn't specified
         in the manifest, the built image isn't tagged.
-        :type stdout: stdout for the subprocess
+        :param int stdout: stdout for the subprocess.
         :return: None.
         """
 
@@ -141,7 +141,7 @@ class Image:
         manifest. If either the `local_tag` or the `registry_tag` aren't specified, the image won't
         be pushed.
         :param str registry: The registry to push the image to.
-        :param stdout: stdout for the subprocess
+        :param stdout: stdout for the subprocess.
         :return: None
         """
 
