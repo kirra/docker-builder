@@ -46,13 +46,16 @@ if __name__ == '__main__':
         description="Docker builder, to build Docker images with up- and/or downstream dependencies"
     )
 
-    # Todo: Fix this so that push is enabled by default
-    parser.add_argument('-p', '--push', action='store_true', default=True,
+    push_group = parser.add_mutually_exclusive_group()
+    push_group.add_argument('-p', '--push', action='store_true',
                         help="Push the image(s) to the registry after building")
+    push_group.add_argument('--no-push', action='store_false',
+                        help="Don't push the image(s) to the registry after building")
+
     parser.add_argument('-r', '--registry', action='append', help="The registries to push the images to")
     parser.add_argument('-i', '--image', action='append', dest='images', help="Name of an image to build")
     parser.add_argument('-d', '--dir', action='append',
-                        help="The directory to scan for Dockerfiles, multiple directories can be given, if none are given the current directory is used.")
+                        help="The directory to scan for Dockerfiles, multiple directories can be given.")
     parser.add_argument('--downstream', action="store_true", help="Only build the downstream dependencies when an --image is given")
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('--no-color', action='store_true')
