@@ -10,6 +10,7 @@ class Builder:
 
     def __init__(self, config: dict):
         self.config = config
+        self.stdout = None if self.config['logging']['level'] == 'debug' else subprocess.PIPE
 
         self.images = {}
         self.graph = None
@@ -22,7 +23,6 @@ class Builder:
         Runs methods to build all images.
         """
 
-        # Start by indexing all images
         self.index_images()
 
         # Either resolve all dependencies or a list of provided images (either full or downstream)
@@ -92,6 +92,8 @@ class Builder:
         :return: An initialized dependency graph.
         """
 
+        logging.info('Building dependency graph')
+
         images = self.images.values()
         nodes = {}
 
@@ -128,7 +130,7 @@ class Builder:
         """
 
         for dependency in self.local_dependencies:
-            self.images[dependency.name].build()
+            self.images[dependency.name].build(self.stdout)
 
     def pull_images(self) -> None:
         """
@@ -136,10 +138,10 @@ class Builder:
         """
 
         for dependency in self.remote_dependencies:
-            logging.debug("Pulling image {:s}".format(dependency.name))
+            logging.info("Pulling image {:s}".format(dependency.name))
 
             command = "docker pull {:s}".format(dependency.name).split(" ")
-            process = subprocess.Popen(command)
+            process = subprocess.Popen(command, stdout=self.stdout)
             process.wait()
 
     def push_images(self) -> None:
@@ -149,4 +151,4 @@ class Builder:
 
         for dependency in self.local_dependencies:
             for registry in self.config['registries']:
-                self.images[dependency.name].push(registry)
+                self.images[dependency.name].push(registry, self.stdout)
