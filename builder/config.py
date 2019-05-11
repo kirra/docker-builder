@@ -1,6 +1,8 @@
 from configparser import ConfigParser
 import logging
 
+from builder.exception import BuilderException
+
 
 class Config:
     def __init__(self, file: ConfigParser, args: dict):
@@ -10,6 +12,7 @@ class Config:
         self.config = {}
 
         self._merge_config()
+        self._validate_config()
 
         logging.debug("Initialized config: {:s}.".format(str(self.config)))
 
@@ -21,6 +24,10 @@ class Config:
         """
 
         config = self._parse_file_config()
+
+        # Make sure the push section always exists, default to False
+        if 'push' not in config['core']:
+            config['core']['push'] = False
 
         if self.arguments.get('push') is True:
             config['core']['push'] = self.arguments['push']
@@ -94,4 +101,23 @@ class Config:
         logging.debug("Parsed file config: {:s}".format(str(config)))
 
         return config
+
+    def _validate_config(self) -> None:
+        """
+        Validates the merged config.
+        :return: None.
+        """
+
+        config = self.config
+
+        # Make sure there are repositories to push to when enabled
+        if config['core']['push'] and len(config['registries']) == 0:
+            msg = "Can't push images because there are no registries configured. " \
+                "Either configure registries or run with --no-push."
+
+            raise ConfigException(msg)
+
+
+class ConfigException(BuilderException):
+    pass
 
