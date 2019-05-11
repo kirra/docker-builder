@@ -1,10 +1,15 @@
+#!/usr/bin/env python
+
 import argparse
 import configparser
 import logging
 import os
+import sys
 
 from builder.builder import Builder
 from builder.config import Config
+from builder.exception import BuilderException
+
 
 def setup_logger(logger):
     sh = logging.StreamHandler()
@@ -12,15 +17,15 @@ def setup_logger(logger):
     def decorate_emit(fn):
         def new(*args):
             levelno = args[0].levelno
-            if(levelno >= logging.CRITICAL):
+            if levelno >= logging.CRITICAL:
                 color = '\x1b[31;1m'
-            elif(levelno >= logging.ERROR):
+            elif levelno >= logging.ERROR:
                 color = '\x1b[31;1m'
-            elif(levelno >= logging.WARNING):
+            elif levelno >= logging.WARNING:
                 color = '\x1b[33;1m'
-            elif(levelno >= logging.INFO):
+            elif levelno >= logging.INFO:
                 color = '\x1b[32;1m'
-            elif(levelno >= logging.DEBUG):
+            elif levelno >= logging.DEBUG:
                 color = '\x1b[35;1m'
             else:
                 color = '\x1b[0m'
@@ -76,6 +81,7 @@ if __name__ == '__main__':
         arguments['logging_level'] = 'info'
 
     if not args.no_color:
+        logging.debug("Enabling ANSI colors")
         setup_logger(logger)
 
     # Parse config file
@@ -84,7 +90,13 @@ if __name__ == '__main__':
     if os.path.exists(config_file):
         file.read(config_file)
 
-    config = Config(file, arguments)
+    try:
+        config = Config(file, arguments)
 
-    builder = Builder(config.config)
-    builder.run()
+        Builder(config.config).run()
+
+        sys.exit(0)
+    except BuilderException as e:
+        logger.error(str(e))
+        sys.exit(1)
+
