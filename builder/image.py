@@ -77,7 +77,7 @@ class Image:
         if 'local_tag' in self.manifest:
             self.name = self.manifest['local_tag']
 
-    def run_pre_build_scripts(self, stdout: Union[None, int]=None) -> None:
+    def run_pre_build_scripts(self, stdout: Union[None, int] = None) -> None:
         """
         Runs scripts defined in the manifest's `pre_build` section.
         :return: None.
@@ -93,7 +93,7 @@ class Image:
                 process = subprocess.Popen(line.split(), stdout=stdout)
                 process.wait()
 
-    def run_post_build_scripts(self, stdout: Union[None, int]=None) -> None:
+    def run_post_build_scripts(self, stdout: Union[None, int] = None) -> None:
         """
         Runs scripts defined in the manifest's `post_build` section.
         :param int stdout: stdout for the subprocess.
@@ -139,7 +139,7 @@ class Image:
 
         self.run_post_build_scripts(stdout)
 
-    def push(self, registry: str, stdout: Union[None, int]=None) -> None:
+    def push(self, registry: str, stdout: Union[None, int] = None) -> None:
         """
         Pushes a Docker image to a registry defined by `registry` and using the settings in the
         manifest. If either the `local_tag` or the `registry_tag` aren't specified, the image won't
@@ -150,6 +150,8 @@ class Image:
         """
 
         if 'local_tag' not in self.manifest or 'registry_tag' not in self.manifest:
+            logging.info(
+                "Not pushing {} because either the local tag or the registry tag are missing".format(self.name))
             return
 
         logging.info("Pushing {}".format(self.name))
