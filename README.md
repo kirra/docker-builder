@@ -26,7 +26,7 @@ registry[] = registry-one
 registry[] = registry-two
 ...
 
-[directories] (Array of directories which contain the Dockerfiles for the images)
+[directories] (Array of directories which contain Dockerfiles for the images. The directories are traversed recursive)
 directory[] = /path/to/images
 directory[] = /path/to/more/images
 ...
