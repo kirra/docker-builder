@@ -47,14 +47,13 @@ class Builder:
         """
 
         for directory in self.config['directories']:
-
             if not os.path.isdir(directory):
                 logging.warning("{:s} is not a directory, skipping".format(directory))
                 continue
 
             logging.info("Indexing images for directory {:s}".format(directory))
 
-            for dockerfile in glob.glob("{:s}/*/Dockerfile".format(directory)):
+            for dockerfile in glob.glob("{:s}/**/Dockerfile".format(directory), recursive=True):
                 image = Image(dockerfile)
                 image.index()
                 self.images[image.name] = image
