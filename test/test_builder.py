@@ -11,6 +11,25 @@ from builder.image import Image
 
 @unittest.skip
 class BuilderTest(unittest.TestCase):
+    @staticmethod
+    def get_config(config: Dict):
+        base_config = {'core': {'push': False}, 'logging': {'level': 'debug'}}
+
+        return {**base_config, **config}
+
+    def test_index_images(self) -> None:
+        """
+        Todo: Implement this test.
+        :return:
+        """
+        config = BuilderTest.get_config({'directories': ['/tmp/containers']})
+        builder = Builder(config)
+
+        builder.index_images()
+
+
+@unittest.skip
+class BuilderTestSkip(unittest.TestCase):
 
     @staticmethod
     def create_builder():
