@@ -1,6 +1,8 @@
 import copy
 from typing import List, Dict
 
+from builder.exception import BuilderException
+
 NodeList = List['Node']
 NodeDict = Dict[str, 'Node']
 
@@ -92,7 +94,7 @@ class Graph:
         return Graph.create(list(nodes.values()))
 
 
-class ResolverException(Exception):
+class ResolverException(BuilderException):
     pass
 
 
