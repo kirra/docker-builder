@@ -164,9 +164,11 @@ class Image:
         process.wait()
 
         command = "docker push {:s}".format(registry_tag)
-        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(command.split(), stdout=stdout, stderr=stdout)
         output, error = process.communicate()
 
         if process.returncode != 0:
             logging.error(
                 "Push failed for {:s} with message: {:s}".format(self.name, error.decode()))
+        else:
+            logging.info("Pushed {}".format(self.name))
