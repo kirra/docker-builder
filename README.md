@@ -41,17 +41,11 @@ The application will scan `Dockerfile`s in the configured directories, determine
 images in the resolve order. You can pass additional data to the `docker build` & `docker push` operations by providing
 a `manifest.json` file in the same directory as where the `Dockerfile` resides. Options for the `manifest.json` file are:
 
-```json
-{
-  "local_tag": "image:version", (The tag used for the image the local Docker repository. When this is not present, the image will not be tagged)
-  "registry_tag": "image:other-version", (The tag used for the image in the registries. If this tag is not present, the image will not be pushed)
-  "arguments": {} (Arguments that are passed to the docker build command)
-  "pre_build": [] (Commands that are executed before the image is build)
-  "post_build": [] (Commands that are executed after the image is build)
-}
-```
-
-**n.b.** Have a look at the [options](https://docs.docker.com/engine/reference/commandline/build/#options) for the `arguments` section.
+- `"local_tag": "image:version"` (The tag used for the image the local Docker repository. When this is not present, the image will not be tagged)
+- `"registry_tag": "image:other-version"` (The tag used for the image in the registries. If this tag is not present, the image will not be pushed)
+- `"arguments": {}` (Arguments that are passed to the docker build command. These [options](https://docs.docker.com/engine/reference/commandline/build/#options) are supported)
+- `"pre_build": []` (Commands that are executed before the image is build)
+- `"post_build": []` (Commands that are executed after the image is build)
 
 A `manifest.json` file could look like this:
 ```json
